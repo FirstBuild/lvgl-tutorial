@@ -3,3 +3,4 @@ BUILD
 tags
 cscope.out
 .DS_Store
+mbed_settings.pyc
