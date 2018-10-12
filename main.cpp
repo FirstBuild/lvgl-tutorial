@@ -17,7 +17,7 @@
 #include "mbed.h"
 #include "lvgl/lvgl.h"
 #include "display.h"
-#include "lv_tutorial/2_objects/lv_tutorial_objects.h"
+//#include "lv_tutorial/2_objects/lv_tutorial_objects.h"
 // #include "lv_tutorial_styles.h"
 //#include "lv_tutorial/4_themes/lv_tutorial_themes.h"
 //#include "lv_tutorial/5_antialiasing/lv_tutorial_antialiasing.h"
@@ -25,6 +25,7 @@
 //#include "lv_tutorial/7_fonts/lv_tutorial_fonts.h"
 //#include "lv_tutorial/8_animations/lv_tutorial_animations.h"
 //#include "lv_tutorial/9_responsive/lv_tutorial_responsive.h"
+#include "lv_tutorial/10_keyboard/lv_tutorial_keyboard.h"
 //=============================================================
 
 // For debug printing
@@ -37,6 +38,23 @@ Ticker milliTicker;
 volatile uint32_t milliSeconds=0;
 void milliTick() {
    milliSeconds++;
+   lv_tick_inc(1);
+}
+
+void handleLvglTasks() {
+   static uint32_t oldtime = 0;
+   static uint8_t count = 5;
+
+   if (oldtime != milliSeconds) {
+      oldtime = milliSeconds;
+      
+      if (count > 0) {
+         count--;
+      } else {
+         count = 5;
+         lv_task_handler();
+      }
+   }
 }
 
 int main(int argc, char ** argv)
@@ -44,12 +62,12 @@ int main(int argc, char ** argv)
    pc.baud(115200);
    pc.printf("Starting...\r\n");
 
-   milliTicker.attach(&milliTick, 0.001);
-
    displayInit();
 
+   milliTicker.attach(&milliTick, 0.001);
+
    //demo_create();
-   lv_tutorial_objects();
+   //lv_tutorial_objects();
    //lv_tutorial_styles();
    //lv_tutorial_themes();
    //lv_tutorial_antialiasing();
@@ -57,12 +75,13 @@ int main(int argc, char ** argv)
    //lv_tutorial_fonts();
    //lv_tutorial_animations();
    //lv_tutorial_responsive();
+   lv_tutorial_keyboard(displayGetInputDevice());
 
    uint32_t oldMillis = 0;
 
-
    while(1)
    {
+      handleLvglTasks();
       displayRun();
 
       if (milliSeconds - oldMillis >= 1000) {

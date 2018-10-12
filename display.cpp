@@ -21,6 +21,7 @@ static void ex_disp_fill(int32_t x1, int32_t y1, int32_t x2, int32_t y2,  lv_col
 static lv_indev_drv_t indev_drv;
 static lv_indev_t * inputDevice;
 
+/*
 Ticker lvMillisTicker;
 void lvMillisTick() {
    lv_tick_inc(1);
@@ -30,6 +31,8 @@ Ticker lvTaskTicker;
 void lvTaskTick() {
    lv_task_handler();
 }
+*/
+
 /* Flush the content of the internal buffer the specific area on the display
  * You can use DMA or any hardware acceleration to do this operation in the background but
  * 'lv_flush_ready()' has to be called when finished
@@ -158,8 +161,8 @@ void displayInit(void) {
    /*Finally register the driver*/
    lv_disp_drv_register(&disp_drv);
 
-   lvTaskTicker.attach(&lvTaskTick, 0.005);
-   lvMillisTicker.attach(&lvMillisTick, 0.001);
+   // lvTaskTicker.attach(&lvTaskTick, 0.005);
+   // lvMillisTicker.attach(&lvMillisTick, 0.001);
 
    touchInt.fall(&handleTouchInterrupt);
 }
@@ -168,3 +171,6 @@ void displayRun(void) {
    if (touchIntOccurred) handleTouch();
 }
 
+lv_indev_t * displayGetInputDevice() {
+   return inputDevice;
+}

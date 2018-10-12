@@ -1,5 +1,5 @@
-ROOT=.
 TOOLCHAIN=GCC_ARM
 TARGET=NUCLEO_F446RE
 GCC_ARM_PATH=/Users/rob/arm-tools/bin
 
+ROOT=.
