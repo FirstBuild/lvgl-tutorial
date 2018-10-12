@@ -38,7 +38,6 @@ Ticker milliTicker;
 volatile uint32_t milliSeconds=0;
 void milliTick() {
    milliSeconds++;
-   lv_tick_inc(1);
 }
 
 void handleLvglTasks() {
@@ -48,6 +47,8 @@ void handleLvglTasks() {
    if (oldtime != milliSeconds) {
       oldtime = milliSeconds;
       
+      lv_tick_inc(1);
+
       if (count > 0) {
          count--;
       } else {

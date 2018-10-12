@@ -59,6 +59,7 @@ static lv_group_t * g;                  /*An Object Group*/
 static lv_indev_t * emulated_kp_indev;  /*The input device of the emulated keypad*/
 static lv_indev_state_t last_state = LV_INDEV_STATE_REL;
 static uint32_t last_key = 0;
+static lv_obj_t * mbox = NULL;
 
 /**********************
  *      MACROS
@@ -211,38 +212,43 @@ static bool emulated_keypad_read(lv_indev_data_t * data)
  */
 static lv_res_t enable_action(lv_obj_t * btn)
 {
-    /*If the butto nsi released the show message box to be sure about the Enable*/
-    if(lv_btn_get_state(btn) == LV_BTN_STATE_REL) {
-        /* Create a dark screen sized bg. with opacity to show
-         * the other objects are not available now*/
-        lv_obj_t * bg = lv_obj_create(lv_scr_act(), NULL);
-        lv_obj_set_protect(bg, LV_PROTECT_PARENT);                  /*The page screen moves it to scrollable area*/
-        lv_obj_set_parent(bg, lv_scr_act());                         /*So move it back when protected*/
-        lv_obj_set_style(bg, &style_mbox_bg);
-        lv_obj_set_size(bg, LV_HOR_RES, LV_VER_RES);
-        lv_obj_set_pos(bg, 0, 0);
-        lv_obj_set_click(bg, false);                        /*For test disable click to enable the buttons under it (else this object would be on the top)*/
+   /*If the butto nsi released the show message box to be sure about the Enable*/
+   if(lv_btn_get_state(btn) == LV_BTN_STATE_REL) {
+      if (mbox != NULL) {
+         printf("mbox existed previously, deleting prior to creating new.\r\n");
+         lv_obj_del(lv_obj_get_parent(mbox));    /*Delete the black background. (it will delete the mbox too)*/
+      }
+      /* Create a dark screen sized bg. with opacity to show
+       * the other objects are not available now*/
+      lv_obj_t * bg = lv_obj_create(lv_scr_act(), NULL);
+      lv_obj_set_protect(bg, LV_PROTECT_PARENT);                  /*The page screen moves it to scrollable area*/
+      lv_obj_set_parent(bg, lv_scr_act());                         /*So move it back when protected*/
+      lv_obj_set_style(bg, &style_mbox_bg);
+      lv_obj_set_size(bg, LV_HOR_RES, LV_VER_RES);
+      lv_obj_set_pos(bg, 0, 0);
+      lv_obj_set_click(bg, false);                        /*For test disable click to enable the buttons under it (else this object would be on the top)*/
 
-        /*Create a message box*/
-        lv_obj_t * mbox = lv_mbox_create(bg, NULL);
-        lv_mbox_set_text(mbox, "Turn on something?");
-        lv_group_add_obj(g, mbox);          /*Add to he group*/
+      /*Create a message box*/
+      //lv_obj_t * mbox = lv_mbox_create(bg, NULL);
+      mbox = lv_mbox_create(bg, NULL);
+      lv_mbox_set_text(mbox, "Turn on something?");
+      lv_group_add_obj(g, mbox);          /*Add to he group*/
 
-        /*Add two buttons*/
-        static const char * btns[] = {"Yes", "No", ""};
-        lv_mbox_add_btns(mbox, btns, mbox_action);
+      /*Add two buttons*/
+      static const char * btns[] = {"Yes", "No", ""};
+      lv_mbox_add_btns(mbox, btns, mbox_action);
 
-        lv_obj_align(mbox, NULL, LV_ALIGN_CENTER, 0, - LV_DPI / 2);
+      lv_obj_align(mbox, NULL, LV_ALIGN_CENTER, 0, - LV_DPI / 2);
 
-        /*Focus on the new message box, can freeze focus on it*/
-        lv_group_focus_obj(mbox);
-        lv_group_focus_freeze(g, true);
-    }
-    /*Just disable without message*/
-    else {
-        lv_btn_set_state(btn_enable, LV_BTN_STATE_REL);
-    }
-    return LV_RES_OK;
+      /*Focus on the new message box, can freeze focus on it*/
+      lv_group_focus_obj(mbox);
+      lv_group_focus_freeze(g, true);
+   }
+   /*Just disable without message*/
+   else {
+      lv_btn_set_state(btn_enable, LV_BTN_STATE_REL);
+   }
+   return LV_RES_OK;
 }
 
 /**
@@ -254,8 +260,13 @@ static lv_res_t mbox_action(lv_obj_t * btn, const char * txt)
 {
     lv_group_focus_freeze(g, false);        /*Release the freeze*/
     lv_obj_t * mbox = lv_mbox_get_from_btn(btn);
-    lv_obj_del(lv_obj_get_parent(mbox));    /*Delete the black background. (it will delete the mbox too)*/
 
+    printf("Hiding the mbox\r\n");
+    lv_obj_set_hidden(lv_obj_get_parent(mbox), true);
+
+    /* printf("Deleting the mbox\r\n"); */
+    /* lv_obj_del(lv_obj_get_parent(mbox));    #<{(|Delete the black background. (it will delete the mbox too)|)}># */
+    /* mbox = NULL; */
 
     /*Mark the enabled state by toggling the button*/
     if(strcmp(txt, "No") == 0)  lv_btn_set_state(btn_enable, LV_BTN_STATE_REL);
