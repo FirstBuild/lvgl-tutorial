@@ -2,5 +2,4 @@ BUILD
 .DS_Store
 tags
 cscope.out
-.DS_Store
 mbed_settings.pyc
