@@ -24,8 +24,8 @@
 //#include "lv_tutorial/6_images/lv_tutorial_images.h"
 //#include "lv_tutorial/7_fonts/lv_tutorial_fonts.h"
 //#include "lv_tutorial/8_animations/lv_tutorial_animations.h"
-#include "lv_tutorial/9_responsive/lv_tutorial_responsive.h"
-//#include "lv_tutorial/10_keyboard/lv_tutorial_keyboard.h"
+//#include "lv_tutorial/9_responsive/lv_tutorial_responsive.h"
+#include "lv_tutorial/10_keyboard/lv_tutorial_keyboard.h"
 //=============================================================
 
 // For debug printing
@@ -75,8 +75,8 @@ int main(int argc, char ** argv)
    //lv_tutorial_image();
    //lv_tutorial_fonts();
    //lv_tutorial_animations();
-   lv_tutorial_responsive();
-   //lv_tutorial_keyboard(displayGetInputDevice());
+   //lv_tutorial_responsive();
+   lv_tutorial_keyboard(displayGetInputDevice());
 
    uint32_t oldMillis = 0;
 
