@@ -96,14 +96,17 @@ void handleTouch() {
    if (ctp.touched()) {
       // Retrieve a point
       TS_Point p = ctp.getPoint();
-      lastY = p.y;
-      lastX = p.x;
+      // lastY = p.y;
+      // lastX = p.x;
+      lastY = p.x;
+      lastX = lcd_width - p.y;
       lastState = LV_INDEV_STATE_PR;
       touched = true;
    } 
    else if (touched) {
       touched = false;
       lastState = LV_INDEV_STATE_REL;
+      printf("Last touch (%d, %d)\r\n", lastX, lastY);
    }
 
    touchIntOccurred = false;

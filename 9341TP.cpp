@@ -1,6 +1,23 @@
 #include "mbed.h"
 #include "9341TP.h"
 
+enum {
+   ILI9341_PowerControl = 0xC0,
+   ILI9341_PixelFormat = 0x3a,
+   ILI9341_FrameRateControl = 0xb1,
+   ILI9341_DisplayFunctionControl = 0xB6,
+   ILI9341_InterfaceControl = 0xf6,
+   ILI9341_GammaSet = 0x26,
+   ILI9341_PositiveGammaCorrection = 0xE0,
+   ILI9341_NegativeGammaCorrection = 0xE1,
+   ILI9341_ReadMADCTL = 0x0B,
+   ILI9341_WriteMADCTL = 0x36,
+   ILI9341_MADCTL_RightToLeft = 0x40,
+   ILI9341_MADCTL_BottomToTop = 0x80,
+   ILI9341_MADCTL_ReverseMode = 0x20,
+   ILI9341_MADCTL_BlueGreenRed = 0x08
+};
+
 //#define SHOW_TEST_SCREENS
 
 //Define lcd io
@@ -10,8 +27,10 @@ static DigitalOut lcd_write(PB_12);
 static DigitalOut lcd_rs(PA_11);		//high :data  low:command     
 static DigitalOut lcd_read(PA_12);
 static PortOut lcd_data(PortC, 0xFFFF);
-static const int lcd_width = 240;
-static const int lcd_height = 320;
+// const int lcd_width = 240;
+// const int lcd_height = 320;
+const int lcd_width = 320;
+const int lcd_height = 240;
 
 // Internal Function Prototypes
 static void Write_Cmd_Data(unsigned char x);
@@ -150,111 +169,112 @@ static void DispRGBGray(void)
 {  
    unsigned int  A,B,C;
    unsigned int  i,j,k,DH;
+   unsigned int bandHeight;
+   unsigned int maxLevels;
+   unsigned int levelWidth;
+   unsigned int redBlueIncrement;
+   unsigned int greenIncrement;
 
    LCD_SetPos(0,(lcd_width-1),0,(lcd_height-1));
 
-   for(k=0;k<80;k++)
+   bandHeight = lcd_height/4;
+   maxLevels = 16;
+   levelWidth = lcd_width/maxLevels;
+   redBlueIncrement = 32/maxLevels;
+   greenIncrement = 64/maxLevels;
+
+   for(k=0;k<bandHeight;k++)
    {   
       A=0;
       B=0;
       C=0;
-      for(i=0;i<16;i++)
+      for(i=0;i<maxLevels;i++)
       {    
-         for(j=0;j<15;j++)
+         for(j=0;j<levelWidth;j++)
          {
             DH=(A<<11)+(B<<5)+C;
             Write_Data_U16(DH);
          }
-         A=A+2;
-         B=B+4;
-         C=C+2;
+         A=A+redBlueIncrement ;
+         B=B+greenIncrement;
+         C=C+redBlueIncrement;
       }
    }
 
-   for(k=0;k<80;k++)
+   for(k=0;k<bandHeight;k++)
    {   
       A=0;
       B=0;
       C=0;
-      for(i=0;i<16;i++)
+      for(i=0;i<maxLevels;i++)
       {    
-         for(j=0;j<15;j++)
+         for(j=0;j<levelWidth;j++)
          {
             DH=(A<<11)+B+C;
             Write_Data_U16(DH);
          }
-         A=A+2;
-
+         A=A+redBlueIncrement;
       }
-
    }
 
-   for(k=0;k<80;k++)
+   for(k=0;k<bandHeight;k++)
    {   
       A=0;
       B=0;
       C=0;
-      for(i=0;i<16;i++)
+      for(i=0;i<maxLevels;i++)
       {    
-         for(j=0;j<15;j++)
+         for(j=0;j<levelWidth;j++)
          {
             DH=A+(B<<5)+C;
             Write_Data_U16(DH);
          }
-         B=B+4;
+         B=B+greenIncrement;
       }
    }
 
-   for(k=0;k<80;k++)
+   for(k=0;k<bandHeight;k++)
    {   
       A=0;
       B=0;
       C=0;
-      for(i=0;i<16;i++)
+      for(i=0;i<maxLevels;i++)
       {    
-         for(j=0;j<15;j++)
+         for(j=0;j<levelWidth;j++)
          {
             DH=A+B+C;
             Write_Data_U16(DH);
          }
-         C=C+2;
+         C=C+redBlueIncrement;
       }
    }
 }
+
+#define IMAGE_WIDTH 120
+#define IMAGE_HEIGHT 160
+typedef struct Image {
+   unsigned int data[IMAGE_WIDTH][IMAGE_WIDTH];
+} Image;
 
 //============================================================
 //show picture
 static void show_picture(void)
 {
-   unsigned char i,j;
-   unsigned int m=0,n=0;
-   LCD_SetPos(0,(lcd_width-1),0,(lcd_height-1));
-   for(j=0;j<160;j++)
-   {
-      for(i=0;i<120;i++)
-      {
-         Write_Data_U16(pic[m++]);
-      }
-      for(i=0;i<120;i++)
-      {
-         Write_Data_U16(pic[n++]);
-      }
-   }
+   unsigned int row, col;
+   Image *pImage = (Image *)pic;
+   unsigned int imageRow=0, imageCol=0;
 
-   m=0;
-   n=0;
-   for(j=0;j<160;j++)
-   {
-      for(i=0;i<120;i++)
-      {
-         Write_Data_U16(pic[m++]);
+   LCD_SetPos(0,(lcd_width-1),0,(lcd_height-1));
+
+   for (row=0; row<lcd_height; row++) {
+      for (col=0; col<lcd_width; col++) {
+         Write_Data_U16(pImage->data[imageRow][imageCol++]);
+         if (imageCol >= IMAGE_WIDTH) imageCol = 0;
       }
-      for(i=0;i<120;i++)
-      {
-         Write_Data_U16(pic[n++]);
-      }
+      imageRow++;
+      imageCol = 0;
+      if (imageRow >= IMAGE_HEIGHT) imageRow= 0;
    }
-   return;
 }
 #endif
 
@@ -320,31 +340,43 @@ void ILI9341_Initial(void)
    //LCD_DataWrite_ILI9341(0xBD); 
    Write_Cmd_Data(0xAA); //0xB0 
 
-   Write_Cmd(0x36);    // Memory Access Control 
-   Write_Cmd_Data(0x08); 
+   Write_Cmd(ILI9341_WriteMADCTL);    // Memory Access Control 
+   // Write_Cmd_Data(0x08); 
+   // Write_Cmd_Data(ILI9341_MADCTL_RightToLeft | ILI9341_MADCTL_BlueGreenRed);
+   // Write_Cmd_Data(ILI9341_MADCTL_BottomToTop | ILI9341_MADCTL_BlueGreenRed);
+   // Write_Cmd_Data(ILI9341_MADCTL_ReverseMode | ILI9341_MADCTL_BlueGreenRed);
+   Write_Cmd_Data(ILI9341_MADCTL_RightToLeft 
+         | ILI9341_MADCTL_BottomToTop 
+         | ILI9341_MADCTL_ReverseMode 
+         | ILI9341_MADCTL_BlueGreenRed);
+   // ILI9341_MADCTL_RightToLeft = 0x40;
+   // ILI9341_MADCTL_BottomToTop = 0x80;
+   // ILI9341_MADCTL_ReverseMode = 0x20;
+   // ILI9341_MADCTL_BlueGreenRed = 0x08;
 
-   Write_Cmd(0x3A);   
+   Write_Cmd(ILI9341_PixelFormat);   
    Write_Cmd_Data(0x55); 
 
-   Write_Cmd(0xB1);   
+   Write_Cmd(ILI9341_FrameRateControl);   
    Write_Cmd_Data(0x00);   
    Write_Cmd_Data(0x13); 
 
-   Write_Cmd(0xB6);    // Display Function Control 
+   Write_Cmd(ILI9341_DisplayFunctionControl);    // Display Function Control 
    Write_Cmd_Data(0x0A); 
-   Write_Cmd_Data(0xA2); 
+   //Write_Cmd_Data(0xA2); 
+   Write_Cmd_Data(0x82); 
 
-   Write_Cmd(0xF6);     
+   Write_Cmd(ILI9341_InterfaceControl);     
    Write_Cmd_Data(0x01); 
    Write_Cmd_Data(0x30); 
 
    Write_Cmd(0xF2);    // 3Gamma Function Disable 
    Write_Cmd_Data(0x00); 
 
-   Write_Cmd(0x26);    //Gamma curve selected 
+   Write_Cmd(ILI9341_GammaSet);    //Gamma curve selected 
    Write_Cmd_Data(0x01); 
 
-   Write_Cmd(0xE0);    //Set Gamma 
+   Write_Cmd(ILI9341_PositiveGammaCorrection);    //Set Gamma 
    Write_Cmd_Data(0x0F); 
    Write_Cmd_Data(0x3F); 
    Write_Cmd_Data(0x2F); 
@@ -361,7 +393,7 @@ void ILI9341_Initial(void)
    Write_Cmd_Data(0x03); 
    Write_Cmd_Data(0x00); 
 
-   Write_Cmd(0XE1);    //Set Gamma 
+   Write_Cmd(ILI9341_NegativeGammaCorrection);    //Set Gamma 
    Write_Cmd_Data(0x00); 
    Write_Cmd_Data(0x00); 
    Write_Cmd_Data(0x10); 
@@ -403,9 +435,16 @@ void Exit_Sleep(void)
 } 
 
 //===============================================================
-void LCD_SetPos(unsigned char x0,unsigned char x1,unsigned int y0,unsigned int y1)
+void LCD_SetPos(unsigned short x0, unsigned short x1, unsigned short y0, unsigned short y1)
 {
    unsigned char YSH,YSL,YEH,YEL;
+   unsigned char XSH,XSL,XEH,XEL;
+
+   XSH=x0>>8;
+   XSL=x0;
+
+   XEH=x1>>8;
+   XEL=x1;
 
    YSH=y0>>8;
    YSL=y0;
@@ -414,10 +453,10 @@ void LCD_SetPos(unsigned char x0,unsigned char x1,unsigned int y0,unsigned int y
    YEL=y1;
 
    Write_Cmd(0x2A);
-   Write_Cmd_Data (0x00);
-   Write_Cmd_Data (x0);
-   Write_Cmd_Data (0x00);
-   Write_Cmd_Data (x1);
+   Write_Cmd_Data (XSH);
+   Write_Cmd_Data (XSL);
+   Write_Cmd_Data (XEH);
+   Write_Cmd_Data (XEL);
    Write_Cmd(0x2B);
    Write_Cmd_Data (YSH);
    Write_Cmd_Data (YSL);
